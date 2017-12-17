@@ -1,0 +1,11 @@
+---
+
+- name: Create software collection folder
+  file: path={{ apache_mountpoint }}/softwarecollections/httpd24 state=directory mode=755
+
+- name: Create /opt/rh folder
+  file: path=/opt/rh state=directory mode=755
+
+- name: Create symbolic link for /opt/rh
+  file: src={{ apache_mountpoint }}/softwarecollections/httpd24 dest=/opt/rh/httpd24 state=link
+

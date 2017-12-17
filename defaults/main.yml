@@ -1,16 +1,15 @@
 ---
 
+apache_uid: 48
 apache_gid: 48
 # apache_repository_url: "https://www.softwarecollections.org/en/scls/rhscl/httpd24/epel-7-x86_64/download/rhscl-httpd24-epel-7-x86_64.noarch.rpm"
 apache_server_root: "/opt/rh/httpd24/root/etc/httpd"
 app_doc_root: /var/www/html
 apache_service: "httpd24-httpd.service"
-apache_specific_path: "/appli/apache"
-apache_uid: 48
 
 apache_listen_port: 80
 apache_ssl_listen_port: 443
-apache_listen_ip: 0.0.0.0
+apache_listen_address: 0.0.0.0
 
 apache_user: apache
 apache_group: apache
@@ -32,7 +31,9 @@ apache_mpm_prefork_maxconnectionsperchild: 0
 apache_mod_status_acl_ips: 127.0.0.1
 
 
-apache_server_fqdn: localhost.domain
-apache_version: 24-1.1-9.el7.x86_64
+apache_version: 24-1.1-14.el7.x86_64
 apache_packages: []
 apache_ssl_packages: [openssl, httpd24-mod_ssl]
+
+apache_docroot: /var/www/html
+

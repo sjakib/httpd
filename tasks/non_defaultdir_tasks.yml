@@ -1,0 +1,12 @@
+---
+
+- name: Create basedir
+  file: path={{ apache_specific_path }} state=directory owner=apache group=apache
+
+- name: Create symlinks
+  file: src={{ apache_server_root }}/{{ item }} path={{ apache_specific_path }}/{{ item }} state=link owner=apache group=apache
+  with_items:
+    - logs
+    - conf
+    - conf.d
+    - conf.modules.d

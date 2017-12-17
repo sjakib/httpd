@@ -1,0 +1,32 @@
+---
+
+- name: Create base directory is present
+  file: path={{ apache_docroot }} state=directory owner=apache group=apache
+
+- name: Disable Apache's welcome configuration
+  file: path={{ apache_server_root }}/conf.d/welcome.conf state=absent
+  notify: restart apache
+
+- name: Delete README
+  file: path={{ apache_server_root }}/conf.d/README state=absent
+
+- name: Create configuration files
+  template: src={{ item.src }} dest={{ item.dest }}  mode=640 owner=apache group=apache
+  with_items:
+    - { src: "httpd.conf.j2" , dest: "{{ apache_server_root }}/conf/httpd.conf" }
+    - { src: "httpd-mpm.conf.j2" , dest: "{{ apache_server_root }}/conf.d/httpd-mpm.conf" }
+    - { src: "httpd-default.conf.j2" , dest: "{{ apache_server_root }}/conf.d/httpd-default.conf" }
+    - { src: "mod_status.conf.j2" , dest: "{{ apache_server_root }}/conf.d/mod_status.conf" }
+  notify: restart apache
+
+- name: Create ssl.conf
+  template: src=ssl.conf.j2 dest={{ apache_server_root }}/conf.d/ssl.conf  mode=640 owner=apache group=apache
+  notify: restart apache
+  when: apache_usessl|default(false)
+
+- name: Delete mod_lua conf (not used and causing problems with PrivateTmp)
+  file: path={{ apache_server_root }}/conf.modules.d/00-lua.conf state=absent
+
+- name: Install logrotate configuration
+  template: src=logrotate-httpd.j2 dest=/etc/logrotate.d/httpd24-httpd
+

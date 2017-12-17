@@ -1,0 +1,8 @@
+---
+
+- name: Create apache group with specific GID
+  group: name=apache gid={{ apache_gid }} state=present
+
+- name: Create apache user with specific UID
+  user: name=apache uid={{ apache_uid }} group=apache shell=/sbin/nologin state=present
+

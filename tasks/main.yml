@@ -1,66 +1,17 @@
 ---
 
-# - name: Add repository
-#   yum:
-#     name: "{{ apache_repository_url }}"
-#     state: present
-#   when: use_softwarecollections|default(true)
-- name: Stopped apache
-  service: name={{ apache_service }} state=stopped
-  ignore_errors: yes
-
-- name: Create apache group with specific GID (Prosodie)
-  group: name=apache gid={{ apache_gid }} state=present
+- include: users.yml
   when: create_apache_user_with_specific_uid|default(false)
 
-- name: Create apache user with specific UID (Prosodie)
-  user: name=apache uid={{ apache_uid }} group=apache shell=/sbin/nologin state=present
-  when: create_apache_user_with_specific_uid|default(false)
+- include: non_defaultdir_pretasks.yml
+  when: apache_use_non_defaultdir|default(false)
 
-- name: Install Apache
-  yum: name={{ item }} state=latest
-  with_items: httpd{{ apache_version }}
+- include: install.yml
 
-- name: Install Apache modules
-  yum: name={{ item }} state=latest
-  with_items: apache_packages
+- include: non_defaultdir_tasks.yml
+  when: apache_use_non_defaultdir|default(false)
 
-- name: Install Apache SSL modules
-  yum: name={{ item }} state=latest
-  with_items: apache_ssl_packages
-  when: apache_usessl|default(false)
-
-- name: Create base directory is present
-  file: path={{ app_doc_root }} state=directory owner=apache group=apache
-
-- name: Disable Apache's welcome configuration
-  file: path={{ apache_server_root }}/conf.d/welcome.conf state=absent
-  notify: restart apache
-
-- name: Create httpd.conf
-  template: src=httpd.conf.j2 dest={{ apache_server_root }}/conf/httpd.conf  mode=640 owner=apache group=apache
-  notify: restart apache
-
-- name: Create httpd-mpm.conf
-  template: src=httpd-mpm.conf.j2 dest={{ apache_server_root }}/conf.d/httpd-mpm.conf  mode=640 owner=apache group=apache
-  notify: restart apache
-
-- name: Create httpd-default.conf
-  template: src=httpd-default.conf.j2 dest={{ apache_server_root }}/conf.d/httpd-default.conf  mode=640 owner=apache group=apache
-  notify: restart apache
-
-- name: Create mod_status.conf
-  template: src=mod_status.conf.j2 dest={{ apache_server_root }}/conf.d/mod_status.conf  mode=640 owner=apache group=apache
-  notify: restart apache
-
-- name: Create ssl.conf
-  template: src=ssl.conf.j2 dest={{ apache_server_root }}/conf.d/ssl.conf  mode=640 owner=apache group=apache
-  notify: restart apache
-  when: apache_usessl|default(false)
-
-- name: Move Apache to non-default location
-  include: move_install.yml
-  when: use_apache_specific_path|default(false)
+- include: config.yml
 
 - name: Start apache
   service: name={{ apache_service }} state=started enabled=yes
