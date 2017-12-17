@@ -1,0 +1,5 @@
+---
+galaxy_info:
+  name: httpd
+  version: 1.0
+dependencies:

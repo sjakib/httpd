@@ -1,0 +1,78 @@
+---
+
+- name: Create folders
+  file: path={{ apache_specific_path }}/{{ item }} state=directory owner=apache group=apache
+  with_items:
+    - logs
+    - docroot
+
+- stat: path=/var/log/httpd24
+  register: statlog
+
+- name: Move logs to new folder
+  shell: mv /var/log/httpd24/* {{ apache_specific_path }}/logs/ creates={{ apache_specific_path }}/logs/error_log
+  when: statlog.stat.isdir
+  ignore_errors: true
+
+- name: Delete old logs folder
+  file: path=/var/log/httpd24 state=absent
+  when: statlog.stat.isdir
+
+- name: Create symlink to new logs folder
+  file: src={{ apache_specific_path }}/logs dest=/var/log/httpd24 state=link
+
+- stat: path={{ apache_server_root }}
+  register: statconf
+
+- name: Delete old logs symlink
+  file: path={{ apache_server_root }}/logs state=absent
+  when: statconf.stat.isdir
+
+- name: Move configuration files to new folder
+  shell: mv {{ apache_server_root }}/* {{ apache_specific_path }}/ creates={{ apache_specific_path }}/conf/httpd.conf
+  when: statconf.stat.isdir
+
+- name: Delete old configuration folder
+  file: path={{ apache_server_root }} state=absent
+  when: statconf.stat.isdir
+
+- name: Create symlink to new configuration folder
+  file: src={{ apache_specific_path }} dest={{ apache_server_root }} state=link
+
+- stat: path=/var/www/html
+  register: statdocroot
+
+# Todo y a un Fail à ce niveau
+#- name: Move docroot files to new folder
+#  shell: mv /var/www/html/* {{ apache_specific_path }}/docroot
+#  when: statdocroot.stat.isdir
+#  ignore_errors: true
+
+- name: Delete old docroot folder
+  file: path=/var/www/html state=absent
+  when: statdocroot.stat is defined and statdocroot.stat.isdir
+
+# - name: Create symlink to new docroot folder
+#   file: src={{ apache_specific_path }}/docroot dest=/var/www/html state=link
+
+- name: Create symlink to apache base directory
+  file: src={{ apache_specific_path }}/docroot dest={{ apache_specific_path }}/current state=link force=yes
+  when: hebergement != "vagrant"
+
+- name: Ensures {{ apache_specific_path }}/current/web dir exists  owner=apache group=apache
+  file: path={{ apache_specific_path }}/current/web state=directory owner=apache group=apache
+
+- name: Delete mod_lua conf (not used and causing problems with PrivateTmp)
+  file: path={{apache_specific_path}}/conf.modules.d/00-lua.conf state=absent
+  notify: restart apache
+
+- template: src={{ item.src }} dest=/etc/logrotate.d/{{ item.dest }}
+  with_items:
+    - { src: logrotate-httpd.j2, dest: httpd24-httpd }
+
+- name: Delete welcome.conf
+  file: path={{ apache_specific_path }}/conf.d/welcome.conf state=absent
+
+- name: Delete README
+  file: path={{ apache_specific_path }}/conf.d/README state=absent
+

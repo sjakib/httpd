@@ -1,0 +1,13 @@
+# {{ ansible_managed }}
+
+{{ apache_specific_path }}/logs/*log {
+    daily
+    missingok
+    rotate 95
+    compress
+    create 640 root
+    sharedscripts
+    postrotate
+	/sbin/service httpd24-httpd reload > /dev/null 2>/dev/null || true
+    endscript
+}
